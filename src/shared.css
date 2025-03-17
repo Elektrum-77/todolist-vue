@@ -1,0 +1,45 @@
+.accent-color {
+  --color: var(--accent-color);
+}
+
+.red {
+  --color: red;
+}
+
+
+.circle {
+  border-radius: 50%;
+}
+
+.rounded {
+  border-radius: 0.8rem;
+}
+
+.bordered {
+  border: 0.2rem solid var(--color);
+}
+
+.padded {
+  padding: 0.5rem;
+}
+
+*[aria-disabled="true"], *[disabled="true"] {
+  cursor: not-allowed;
+  pointer-events: none;
+  box-shadow: unset;
+  --color: var(--disabled-color);
+  --bg-color: oklch(from var(--color) calc(l + 0.5) c h );
+  background-color: var(--bg-color);
+}
+
+*[aria-selected="true"] {
+  box-shadow: 0 0 0.5rem var(--color);
+}
+
+.clickable {
+  cursor: pointer;
+
+  &:hover, &:focus {
+    box-shadow: 0 0 0.5rem var(--color);
+  }
+}
