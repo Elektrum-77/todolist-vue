@@ -6,7 +6,7 @@ defineProps<Todo>()
 </script>
 
 <template>
-  <div class="todo-view clickable">
+  <div class="todo-view">
     <CheckBox :status />
     <span class="title" v-text="title" />
     <span v-if="description !== undefined"> - {{ description }}</span>

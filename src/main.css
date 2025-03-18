@@ -4,6 +4,10 @@
   --disabled-color: #4b5c6e;
 }
 
+button {
+  all: unset;
+}
+
 *,
 *::before,
 *::after {

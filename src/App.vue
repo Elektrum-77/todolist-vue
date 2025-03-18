@@ -5,40 +5,52 @@ import { computed, ref } from 'vue'
 import CheckBox from '@/CheckBox.vue'
 import { Icon } from '@iconify/vue'
 import { useLocalStorage } from '@vueuse/core'
+import { vOnClickOutside } from '@vueuse/components'
 
-const defaultTodos: Todo[] = []
-
-const todoLocalStorage = useLocalStorage('todos', JSON.stringify(defaultTodos))
+const todoLocalStorage = useLocalStorage('todos', JSON.stringify([]))
 const todos = computed<Todo[]>({
   get: () => JSON.parse(todoLocalStorage.value) as Todo[],
   set: (v) => (todoLocalStorage.value = JSON.stringify(v)),
 })
 
 const deleting = ref<boolean>(false)
+const deletingAll = ref<boolean>(false)
 
 function onTodoClick(i: number): void {
-  if (deleting.value) {
-    deleting.value = false
-    todos.value = todos.value.toSpliced(i, 1)
-    return
-  }
+  if (deleting.value) return deleteTodo(i)
+  else return updateTodo(i)
+}
 
+function updateTodo(i: number) {
   const t = todos.value[i]
   t.status = !t.status
   todos.value = todos.value.with(i, t)
+}
+
+function deleteTodo(i: number): void {
+  deleting.value = false
+  todos.value = todos.value.toSpliced(i, 1)
+}
+
+function markAll() {
+  todos.value = todos.value.map((t) => ({ ...t, status: true }))
+}
+
+function unmarkAll() {
+  todos.value = todos.value.map((t) => ({ ...t, status: false }))
 }
 
 const formTitle = ref<string>('')
 const formDescription = ref<string>('')
 
 function addTodo() {
-  const title = formTitle.value
-  const description = formDescription.value.trim() === '' ? undefined : formDescription.value
+  const title = formTitle.value.trim()
+  const description = formDescription.value.trim()
   const status = false
 
-  if (title.trim() === '') return
+  if (title === '') return
 
-  const todo = { title, status, description }
+  const todo = { title, status, description: description === '' ? undefined : description }
   todos.value = [...todos.value, todo]
   formTitle.value = ''
   formDescription.value = ''
@@ -68,72 +80,70 @@ function importTodos(): void {
 }
 
 function exportTodos(): void {
-  navigator.clipboard.writeText(todoLocalStorage.value)
+  navigator.clipboard.writeText(todoLocalStorage.value).then(() => alert('Copied to clipboard !'))
+}
+
+function deleteAll(): void {
+  if (!deletingAll.value) {
+    deletingAll.value = true
+    return
+  }
+  todos.value = []
+  deletingAll.value = false
 }
 </script>
 
 <template>
   <div class="app">
     <div class="actions">
-      <CheckBox
-        class="accent-color clickable"
-        :status="false"
-        @click="todos = todos.map((t) => ({ ...t, status: false }))"
-        tabindex="0"
-        aria-label="all false action"
-      />
-      <Icon
-        :icon="deleting ? 'mdi:trash-can-empty' : 'mdi-trash'"
-        class="red clickable"
+      <button @click="markAll" aria-label="all done action">
+        <CheckBox :status="true" />
+      </button>
+      <button class="accent-color" @click="unmarkAll" aria-label="all undone action">
+        <CheckBox :status="false" />
+      </button>
+      <button
+        class="red"
         :class="{ 'tilt-shaking-loop': deleting }"
         @click="deleting = !deleting"
-        tabindex="0"
         aria-label="delete"
-      />
-      <Icon
-        icon="mdi:clear"
+      >
+        <Icon :icon="deleting ? 'mdi:trash-can-empty' : 'mdi-trash'" />
+      </button>
+      <button
         class="red clickable"
-        @click="todos = defaultTodos"
-        tabindex="0"
+        :class="{ 'tilt-shaking-loop': deletingAll }"
+        @click="deleteAll"
+        v-on-click-outside="() => (deletingAll = false)"
+        @keyup.esc="deletingAll = false"
+        @focusout="deletingAll = false"
         aria-label="delete all"
-      />
-      <Icon
-        icon="mdi:import"
-        class="clickable"
-        @click="importTodos"
-        tabindex="0"
-        aria-label="import from clipboard"
-      />
-      <Icon
-        icon="mdi:export"
-        class="clickable"
-        @click="exportTodos"
-        tabindex="0"
-        aria-label="export to clipboard"
-      />
+      >
+        <Icon icon="mdi:clear" />
+      </button>
+      <button @click="importTodos" aria-label="import from clipboard">
+        <Icon icon="mdi:import" />
+      </button>
+      <button @click="exportTodos" aria-label="export to clipboard">
+        <Icon icon="mdi:export" />
+      </button>
       <div class="add">
-        <Icon
-          class="clickable"
-          icon="mdi:plus"
-          @click="addTodo()"
-          tabindex="0"
-          aria-label="add new todo"
-        />
+        <button @click="addTodo()" aria-label="add new todo">
+          <Icon icon="mdi:plus" />
+        </button>
         <input v-model="formTitle" type="text" placeholder="Title" />
         <input v-model="formDescription" type="text" placeholder="Description" />
       </div>
     </div>
-    <div class="todos" :class="{ red: deleting }">
-      <TodoView
+    <div class="todos">
+      <button
         v-for="({ title, status, description }, i) in todos"
         :key="title"
-        :title
-        :status
-        :description
         @click="onTodoClick(i)"
-        :class="{ 'accent-color': !status && !deleting }"
-        tabindex="0"
-      />
+        :class="{ 'accent-color': !status, deleting, deletingAll }"
+      >
+        <TodoView :title :status :description />
+      </button>
     </div>
   </div>
 </template>
@@ -145,6 +155,12 @@ function exportTodos(): void {
   .todos {
     display: flex;
     flex-direction: column;
+
+    .deletingAll,
+    .deleting:focus,
+    .deleting:hover {
+      --color: red;
+    }
   }
 
   .actions {
@@ -156,7 +172,8 @@ function exportTodos(): void {
     overflow-x: auto;
     overflow-y: clip;
 
-    & > div {
+    & > div,
+    button {
       display: flex;
       flex-direction: row;
       align-items: center;

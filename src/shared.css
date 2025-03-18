@@ -6,7 +6,6 @@
   --color: red;
 }
 
-
 .circle {
   border-radius: 50%;
 }
@@ -23,23 +22,18 @@
   padding: 0.5rem;
 }
 
-*[aria-disabled="true"], *[disabled="true"] {
-  cursor: not-allowed;
-  pointer-events: none;
-  box-shadow: unset;
-  --color: var(--disabled-color);
-  --bg-color: oklch(from var(--color) calc(l + 0.5) c h );
-  background-color: var(--bg-color);
-}
-
-*[aria-selected="true"] {
+*[aria-selected='true'] {
   box-shadow: 0 0 0.5rem var(--color);
 }
 
-.clickable {
+.clickable, button {
   cursor: pointer;
+  border: 1px solid transparent;
 
-  &:hover, &:focus {
+
+  &:hover,
+  &:focus {
     box-shadow: 0 0 0.5rem var(--color);
+    border-color: var(--color);
   }
 }
