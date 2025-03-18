@@ -2,7 +2,9 @@
 
 This is a simple Todo list App using [VueJs](https://vuejs.org/)
 
-the top icons are actions as follows :
+A working build of the app can be found [here](https://elektrum-77.github.io/todolist-vue/)
+
+The top icons are actions as follows :
 
 - mark all
 - unmark all
